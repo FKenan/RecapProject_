@@ -1,7 +1,7 @@
-﻿using Business.Abstrack;
+﻿using Business.Abstract;
 using Business.Constants;
 using Core.Utilities.Results;
-using DataAccess.Abstrack;
+using DataAccess.Abstract;
 using Entities.Concrete;
 using System.Collections.Generic;
 
@@ -44,6 +44,11 @@ namespace Business.Concrete
         {
             _rentalDal.Update(rental);
             return new SuccessResult(Messages.RentalUpdated);
+        }
+
+        public IDataResult<Rental> GetById(int id)
+        {
+            return new SuccessDataResult<Rental>(_rentalDal.Get(r => r.Id == id));
         }
     }
 }

@@ -1,109 +1,107 @@
-﻿using Business.Abstrack;
+﻿using Business.Abstract;
 using Business.Constants;
 using Core.Utilities.Business;
 using Core.Utilities.Helper.FileHelper;
 using Core.Utilities.Results;
-using DataAccess.Abstrack;
+using DataAccess.Abstract;
 using Entities.Concrete;
+using Entities.DTOs;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Business.Concrete
 {
     public class CarImageManager : ICarImageService
     {
         ICarImageDal _carImageDal;
-        IFileHelperService _fileHelper;
+        IFileHelper _fileHelper;
 
-        public CarImageManager(ICarImageDal carImageDal, IFileHelperService fileHelper)
+        public CarImageManager(ICarImageDal carImageDal, IFileHelper fileHelper)
         {
             _carImageDal = carImageDal;
             _fileHelper = fileHelper;
         }
 
-        public IResult Add(IFormFile formFile, CarImage carImage)   // IFormFile http üzerinden gönderilen dosyayı temsil eder
+        public IResult Add(IFormFile file, CarImage carImage)
         {
-            IResult result = BusinessRules.Run(CheckİfCarImageLimitExceded(carImage.CarId));
+            var result = BusinessRules.Run(CheckIfCarImageLimit(carImage.CarId));
             if (result != null)
             {
                 return result;
             }
 
-            carImage.ImagePath = _fileHelper.Upload(formFile, PathConstants.ImagesPath);
+            carImage.ImagePath = _fileHelper.Upload(file, PathConstants.ImagesPath);
             carImage.Date = DateTime.Now;
-
             _carImageDal.Add(carImage);
-            return new SuccessResult(Messages.CarImageAdded);
+            return new SuccessResult("Resim başarıyla yüklendi");
         }
 
         public IResult Delete(CarImage carImage)
         {
-            _fileHelper.Delete(PathConstants.ImagesPath + carImage.ImagePath);
-
-            _carImageDal.Delete(carImage);
-            return new SuccessResult(Messages.CarImageDeleted);
-        }
-
-        public IDataResult<CarImage> Get(int id)
-        {
-            return new SuccessDataResult<CarImage>(_carImageDal.Get(p => p.Id == id), Messages.CarImagesListed);
+            _fileHelper.Delete(PathConstants.ImagesPath + carImage.ImagePath); // resim dosyasının bulunduğu yolu sildik
+            _carImageDal.Delete(carImage); // resmi db'den sildik
+            return new SuccessResult();
         }
 
         public IDataResult<List<CarImage>> GetAll()
         {
-            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(), Messages.CarImagesListed);
+            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll());
         }
 
-        public IDataResult<CarImage> GetById(int id)
+        public IDataResult<List<CarImage>> GetByCarId(int carId) // Arabanın id'sine göre resimleri listeleyecek metod
         {
-            return new SuccessDataResult<CarImage>(_carImageDal.Get(c => c.Id == id), Messages.CarImagesListed);
-        }
-
-        public IDataResult<List<CarImage>> GetByCarId(int carId)
-        {
-            var result = BusinessRules.Run(CheckİfCarImageExists(carId));
+            var result = BusinessRules.Run(CheckCarImage(carId)); // arabanın resmi var mı yokmu diye kontrol ettik
             if (result != null)
             {
-                return new ErrorDataResult<List<CarImage>>(GetDefaultImage(carId).Data);
+                return new ErrorDataResult<List<CarImage>>(GetDefaultImage(carId).Data); // resim yoksa default resim gönderdik
             }
-            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(p => p.CarId == carId), Messages.CarImagesListed);
+
+            return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(c => c.CarId == carId)); // resim varsa listele dedik
         }
 
-        public IResult Update(IFormFile formFile, CarImage carImage)
+        public IDataResult<CarImage> GetByImageId(int imageId)
         {
-            carImage.ImagePath = _fileHelper.Update(formFile, carImage.ImagePath, PathConstants.ImagesPath);
-            _carImageDal.Update(carImage);
-            return new SuccessResult(Messages.CarImageUpdated);
+            return new SuccessDataResult<CarImage>(_carImageDal.Get(c => c.Id == imageId));
         }
 
-        private IResult CheckİfCarImageLimitExceded(int carId)
+        public IResult Update(IFormFile file, CarImage carImage)
         {
-            var result = _carImageDal.GetAll(c => c.CarId == carId);
-            if (result.Count > 5)
+            carImage.ImagePath = _fileHelper.Update(file, PathConstants.ImagesPath + carImage.ImagePath, PathConstants.ImagesPath); // resmi ve resmin dosya yolunu değiştirdik
+            _carImageDal.Update(carImage); // resmi db'de değiştirdik
+            return new SuccessResult();
+        }
+
+
+        private IResult CheckIfCarImageLimit(int carId) // Arabanın resim sayısını kontrol eden metod
+        {
+            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
+            if (result >= 5)
             {
-                return new ErrorResult(Messages.CarImageLimitExceded);
+                return new ErrorResult();
             }
             return new SuccessResult();
         }
 
-        private IResult CheckİfCarImageExists(int carId)
+        private IResult CheckCarImage(int carId) // arabanın resmi var mı yok mu diye kontrol eden metod
         {
-            var result = _carImageDal.GetAll(c => c.CarId == carId);
-            if (result.Count > 0)
+            var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
+            if (result > 0)
             {
                 return new SuccessResult();
             }
             return new ErrorResult();
         }
 
-        private IDataResult<List<CarImage>> GetDefaultImage(int carId)
+        private IDataResult<List<CarImage>> GetDefaultImage(int carId) // arabanın resmi yoksa default resim atayacak olan metod
         {
-            List<CarImage> carImage = new List<CarImage>
-            {
-                new CarImage{CarId = carId, Date = DateTime.Now, ImagePath = "DefaultImage.jpg" }
-            };
+            List<CarImage> carImage = new List<CarImage>();
+            carImage.Add(new CarImage { CarId = carId, Date = DateTime.Now, ImagePath = PathConstants.ImagesPath + "Default\\DefaultImage.jpg" });
             return new SuccessDataResult<List<CarImage>>(carImage);
         }
+
     }
 }

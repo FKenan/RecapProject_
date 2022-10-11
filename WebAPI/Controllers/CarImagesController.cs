@@ -1,4 +1,5 @@
-﻿using Business.Abstrack;
+﻿using Business.Abstract;
+using Entities.Concrete;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -7,11 +8,11 @@ namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CarImagesContoller : ControllerBase
+    public class CarImagesController : ControllerBase
     {
         ICarImageService _carImageService;
 
-        public CarImagesContoller(ICarImageService carImageService)
+        public CarImagesController(ICarImageService carImageService)
         {
             _carImageService = carImageService;
         }
@@ -28,10 +29,10 @@ namespace WebAPI.Controllers
             return BadRequest(result);
         }
 
-        [HttpGet("getbyid")]
-        public IActionResult GetById(int id)
+        [HttpGet("getbyimageid")]
+        public IActionResult GetByImageId(int id)
         {
-            var result = _carImageService.GetById(id);
+            var result = _carImageService.GetByImageId(id);
 
             if (result.Success)
             {
@@ -41,7 +42,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("getbycarid")]
-        public IActionResult GetByCarİd(int carId)
+        public IActionResult GetByCarId(int carId)
         {
             var result = _carImageService.GetByCarId(carId);
 
@@ -53,9 +54,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("add")]
-        public IActionResult Add([FromForm] List<IFormFile> formFile, [FromForm] CarImage carImage)
+        public IActionResult Add([FromForm]List<IFormFile> formFile, [FromForm] CarImage carImage)
         {
-            var result = _carImageService.Add(formFile, carImage);
+            var result = _carImageService.Add((IFormFile)formFile, carImage);
 
             if (result.Success)
             {
@@ -77,9 +78,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("update")]
-        public IActionResult Update([FromForm] List<IFormFile> formFile, [FromForm] CarImage carImage)
+        public IActionResult Update([FromForm]List<IFormFile> formFile, [FromForm]CarImage carImage)
         {
-            var result = _carImageService.Update(formFile, carImage);
+            var result = _carImageService.Update((IFormFile)formFile, carImage);
 
             if (result.Success)
             {

@@ -1,12 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Threading.Tasks;
+using Core.Utilities.Ioc;
+using Core.Utilities.Helper.GuidHelper;
+using System.IO;
 
 namespace Core.Utilities.Helper.FileHelper
 {
-    public class FileHelperManager : IFileHelperService
+    public class FileHelperManager : IFileHelper
     {
         public void Delete(string filePath)
         {
@@ -16,12 +21,14 @@ namespace Core.Utilities.Helper.FileHelper
             }
         }
 
-        public string Update(IFormFile file, string filePath, string root)
+        public string Update(IFormFile file, string filePath, string root) // file--> güncellenecek yeni dosya, filePath --> eski dosyanın bulunduğu dizin, root--> güncellenecek dosyanın kayıt dizini
         {
+
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
             }
+
             return Upload(file, root);
         }
 
@@ -29,13 +36,15 @@ namespace Core.Utilities.Helper.FileHelper
         {
             if (file.Length > 0)
             {
+
                 if (!Directory.Exists(root))
                 {
                     Directory.CreateDirectory(root);
                 }
-                string extension = Path.GetExtension(file.FileName);
-                string guid = Guid.NewGuid().ToString();
-                string filePath = guid + extension;
+
+                string extension = Path.GetExtension(file.FileName);// dosyanın uzantısını aldık .jpg gibi
+                string guid = GuidHelper.GuidHelper.CreateGuid(); 
+                string filePath = guid + extension; 
 
                 using (FileStream fileStream = File.Create(root + filePath))
                 {
@@ -43,7 +52,9 @@ namespace Core.Utilities.Helper.FileHelper
                     fileStream.Flush();
                     return filePath;
                 }
+
             }
+
             return null;
         }
     }
