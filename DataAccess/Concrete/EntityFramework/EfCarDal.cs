@@ -10,6 +10,28 @@ namespace DataAccess.Concrete.EntityFramework
 {
     public class EfCarDal : EfEntityRepositoryBase<Car, ReCapContext>, ICarDal
     {
+        public CarDetailDto GetCarDetail(int carId)
+        {
+            using (ReCapContext context = new ReCapContext())
+            {
+                var result = from ca in context.Cars
+                             join b in context.Brands
+                             on ca.BrandId equals b.Id
+                             join cl in context.Colors
+                             on ca.ColorId equals cl.Id
+                             where ca.Id == carId
+                             select new CarDetailDto
+                             {
+                                 Id = ca.Id,
+                                 BrandName = b.Name,
+                                 CarName = ca.CarName,
+                                 ColorName = cl.Name,
+                                 DailyPrice = ca.DailyPrice,
+                                 Description = ca.Description
+                             };
+                return result.ToList().FirstOrDefault();
+            }
+        }
         public List<CarDetailDto> GetCarDetails()
         {
             using (ReCapContext context = new ReCapContext())
@@ -25,7 +47,8 @@ namespace DataAccess.Concrete.EntityFramework
                                  BrandName = b.Name,
                                  CarName = ca.CarName,
                                  ColorName = cl.Name,
-                                 DailyPrice = ca.DailyPrice
+                                 DailyPrice = ca.DailyPrice,
+                                 Description = ca.Description
                              };
                 return result.ToList();
             }
@@ -46,7 +69,8 @@ namespace DataAccess.Concrete.EntityFramework
                                  BrandName = b.Name,
                                  CarName = c.CarName,
                                  ColorName = cl.Name,
-                                 DailyPrice = c.DailyPrice
+                                 DailyPrice = c.DailyPrice,
+                                 Description = c.Description
                              };
                 return result.ToList();
             }
@@ -68,7 +92,8 @@ namespace DataAccess.Concrete.EntityFramework
                                  BrandName = b.Name,
                                  CarName = c.CarName,
                                  ColorName = cl.Name,
-                                 DailyPrice = c.DailyPrice
+                                 DailyPrice = c.DailyPrice,
+                                 Description = c.Description
                              };
                 return result.ToList();
             }
@@ -91,7 +116,8 @@ namespace DataAccess.Concrete.EntityFramework
                                  BrandName = b.Name,
                                  CarName = c.CarName,
                                  ColorName = cl.Name,
-                                 DailyPrice = c.DailyPrice
+                                 DailyPrice = c.DailyPrice,
+                                 Description = c.Description
                              };
                 return result.ToList();
             }
